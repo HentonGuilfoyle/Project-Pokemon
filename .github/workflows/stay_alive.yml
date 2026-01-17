@@ -1,15 +1,24 @@
-name: Keep Supabase Free
+name: Keep Supabase Alive
 on:
   schedule:
-    - cron: '0 0 * * 0,3' # Runs at midnight every Sunday and Wednesday
-  workflow_dispatch:      # This allows you to run it manually to test
+    - cron: '0 0 * * 0,3'
+  workflow_dispatch:
 
 jobs:
   ping_supabase:
     runs-on: ubuntu-latest
     steps:
-      - name: Send Heartbeat to Database
+      - name: Send Heartbeat
+        env:
+          # We "map" the secrets to environment variables here first. 
+          # This makes the curl command much more stable.
+          S_URL: ${{ secrets.SUPBASE_PROJECT_URL }}
+          S_KEY: ${{ secrets.SUPBASE_PROJECTPOKEMON_APIKEY_ANONPUBLIC }}
         run: |
-          curl -X GET "${{ secrets.SUPABASE_URL }}/rest/v1/pokemon?select=id&limit=1" \
-          -H "apikey: ${{ secrets.SUPABASE_KEY }}" \
-          -H "Authorization: Bearer ${{ secrets.SUPABASE_KEY }}"
+          if [ -z "$S_URL" ]; then
+            echo "ERROR: SUPABASE_URL secret is missing!"
+            exit 1
+          fi
+          curl -s -o /dev/null -w "%{http_code}" -X GET "$S_URL/rest/v1/?select=now()" \
+          -H "apikey: $S_KEY" \
+          -H "Authorization: Bearer $S_KEY"
