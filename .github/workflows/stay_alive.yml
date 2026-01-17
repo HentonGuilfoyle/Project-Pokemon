@@ -1,0 +1,15 @@
+name: Keep Supabase Free
+on:
+  schedule:
+    - cron: '0 0 * * 0,3' # Runs at midnight every Sunday and Wednesday
+  workflow_dispatch:      # This allows you to run it manually to test
+
+jobs:
+  ping_supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Heartbeat to Database
+        run: |
+          curl -X GET "${{ secrets.SUPABASE_URL }}/rest/v1/pokemon?select=id&limit=1" \
+          -H "apikey: ${{ secrets.SUPABASE_KEY }}" \
+          -H "Authorization: Bearer ${{ secrets.SUPABASE_KEY }}"
