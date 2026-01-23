@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
 interface Pokemon {
@@ -25,15 +28,37 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export default async function PokedexPage() {
-  const { data: pokemon, error } = await supabase
-    .from('pokedex_view')
-    .select('*')
-    .returns<Pokemon[]>(); // Tell Supabase to use the Blueprint
+export default function PokedexPage() {
+  const [pokemon, setPokemon] = useState<Pokemon[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  if (error) {
-    return <div className="p-10 text-red-500">Error: {error.message}</div>;
-  }
+  useEffect(() => {
+    async function fetchData() {
+      console.log("Fetching from Supabase...");
+      const { data, error } = await supabase
+        .from('pokedex_view')
+        .select('*')
+        .returns<Pokemon[]>();
+
+      if (error) {
+        console.error("Supabase Error:", error.message);
+      } else if (data) {
+        console.log("Data received:", data.length, "pokemon found.");
+        setPokemon(data);
+      }
+      setLoading(false);
+    }
+    fetchData();
+  }, []);
+
+  const filteredPokemon = pokemon.filter((mon) => {
+    const query = searchQuery.toLowerCase().trim();
+    if (!query) return true;
+    const nameMatch = mon.name.toLowerCase().includes(query);
+    const idMatch = String(mon.dex_num).includes(query);
+    return nameMatch || idMatch;
+  });
 
   return (
     <main className="min-h-screen bg-gray-100 text-slate-800 p-8">
@@ -44,15 +69,25 @@ export default async function PokedexPage() {
         <p className="text-slate-600 mt-2">Relational Database Engine v1.0</p>
       </header>
 
+      {/* Search Bar */}
+      <div className="mb-8 max-w-md">
+        <input
+          type="text"
+          placeholder="Search by name or #id..."
+          className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 focus:border-red-500 outline-none transition-all shadow-sm"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
       <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-8 justify-items-center">
-        {pokemon?.map((mon) => (
+        {filteredPokemon.map((mon) => (
           <div 
-            key={mon.dex_num} 
+            key={'${mon.dex_num}-${mon.name}'}
             className="group relative bg-yellow-50 border border-slate-800 rounded-2xl p-6"
           >
-            {/* PNG Section - Finished & Centered */}
             <div className="flex items-center gap-4 mb-6">
-              <div className="">
+              <div>
                 {mon.png_url ? (
                   <img 
                     src={mon.png_url} 
@@ -60,25 +95,22 @@ export default async function PokedexPage() {
                     className="h-32 w-32 object-contain drop-shadow-md group-hover:scale-110 transition-transform"
                   />
                 ) : (
-                  <div className="h-32 w-32 bg-slate-700 rounded flex items-center justify-center text-[10px]">NO_IMG</div>
+                  <div className="h-32 w-32 bg-slate-700 rounded flex items-center justify-center text-[10px] text-white">NO_IMG</div>
                 )}
               </div>
-
             </div>
 
             <div>
-              <span className="text-xs font-mono text-slate-800 block">#{String(mon.dex_num).padStart(4, '00')}</span>
+              <span className="text-xs font-mono text-slate-800 block">#{String(mon.dex_num).padStart(4, '0')}</span>
               <h2 className="text-2xl font-bold mb-4 group-hover:text-slate-800 transition-colors">
                 {mon.name}
               </h2>
+              {/* LATCH POINT: Passing types to your TypeBadge component */}
               <div className="flex gap-2">
                     <TypeBadge type={mon.type_1} />
                     {mon.type_2 && <TypeBadge type={mon.type_2} />}
               </div>
-
             </div>
-
-
           </div>
         ))}
       </div>
@@ -86,6 +118,7 @@ export default async function PokedexPage() {
   );
 }
 
+// Your exact TypeBadge component with your chosen color palette
 function TypeBadge({ type }: { type: string }) {
   if (!type) return null;
 
@@ -110,7 +143,7 @@ function TypeBadge({ type }: { type: string }) {
     Fairy: "bg-[#D685AD] text-white",
   }
 
-  const typeColor = typeColors[type] || "bg-white border border-slate-800";
+  const typeColor = typeColors[type] || "bg-white";
 
   return (
     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${typeColor}`}>
