@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = 'force-dynamic';
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
@@ -84,7 +85,7 @@ export default function PokedexPage() {
       <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-8 justify-items-center">
         {filteredPokemon.map((mon) => (
           <div 
-            key={'${mon.dex_num}-${mon.name}'}
+            key={`${mon.dex_num}-${mon.name}`}
             className="group relative bg-yellow-50 border border-slate-800 rounded-2xl p-6"
           >
             <div className="flex items-center gap-4 mb-6">
