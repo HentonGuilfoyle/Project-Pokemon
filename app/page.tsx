@@ -39,6 +39,7 @@ export default function PokedexPage() {
       const { data, error } = await supabase
         .from('pokedex_view')
         .select('*')
+        .range(0, 1100)
         .returns<Pokemon[]>();
 
       if (error) {
