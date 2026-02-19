@@ -66,7 +66,7 @@ export default function PokedexPage() {
     <main className="min-h-screen bg-gray-100 text-slate-800 p-8">
       <header className="mb-12 border-b border-slate-800 pb-6">
         <h1 className="text-4xl font-black tracking-tight text-red-800">
-          PROJECT: POKÉMON REDUX
+          PROJECT: POKÉDEX
         </h1>
         <p className="text-slate-600 mt-2">Relational Database Engine v1.0</p>
       </header>
